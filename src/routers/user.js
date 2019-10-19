@@ -4,6 +4,14 @@ const auth = require('../middleware/auth')
 
 const router = express.Router()
 
+/**
+ * Requires a JSON payload:
+ * {
+ *   "name": "johnnybravo",
+ *   "email": "qwerty@email.com",
+ *   "password": "clear password"
+ * }
+ */
 router.post('/users', async (req, res) => {
     // Create a new user
     try {
@@ -15,6 +23,7 @@ router.post('/users', async (req, res) => {
         res.status(400).send(error)
     }
 })
+
 
 router.post('/users/login', async(req, res) => {
     //Login a registered user
@@ -32,30 +41,39 @@ router.post('/users/login', async(req, res) => {
 
 })
 
+
+/**
+ * The token must be in the header
+ */
 router.get('/users/me', auth, async(req, res) => {
     // View logged in user profile
     res.send(req.user)
 })
 
+
+
 router.post('/users/me/logout', auth, async (req, res) => {
+  // here req.user is added byt the middleware from the database
     // Log user out of the application
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
             return token.token != req.token
         })
         await req.user.save()
-        res.send()
+        res.send() // should maybe send something back to the server
     } catch (error) {
         res.status(500).send(error)
     }
 })
+
+
 
 router.post('/users/me/logoutall', auth, async(req, res) => {
     // Log user out of all devices
     try {
         req.user.tokens.splice(0, req.user.tokens.length)
         await req.user.save()
-        res.send()
+        res.send() // should maybe send something back to the server
     } catch (error) {
         res.status(500).send(error)
     }

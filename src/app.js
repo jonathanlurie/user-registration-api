@@ -1,3 +1,7 @@
+console.log(process.env.MONGODB_URL)
+
+
+
 const express = require('express')
 const port = process.env.PORT
 const userRouter = require('./routers/user')
