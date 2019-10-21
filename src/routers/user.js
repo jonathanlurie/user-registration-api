@@ -1,18 +1,21 @@
 const express = require('express')
+const bcrypt = require('bcryptjs')
 const User = require('../models/User')
 const auth = require('../middleware/auth')
 
 const router = express.Router()
 
 /**
+ * Create a new user, to which we add a token
+ *
  * Requires a JSON payload:
  * {
- *   "name": "johnnybravo",
+ *   "username": "johnnybravo",
  *   "email": "qwerty@email.com",
  *   "password": "clear password"
  * }
  */
-router.post('/users', async (req, res) => {
+router.post('/users/create', async (req, res) => {
     // Create a new user
     try {
         const user = new User(req.body)
@@ -42,6 +45,32 @@ router.post('/users/login', async(req, res) => {
 })
 
 
+router.put('/users/me/password', auth, async(req, res) => {
+
+  console.log(await bcrypt.hash(req.body.newPassword, 8))
+
+    try {
+      let user = req.user
+      console.log('plain', req.body.currentPassword)
+      console.log('hash', user.password)
+      const isPasswordMatch = await bcrypt.compare(req.body.currentPassword, user.password)
+
+      console.log('isPasswordMatch', isPasswordMatch)
+
+      if (!isPasswordMatch) {
+          throw new Error({error: 'The current password is invalid'})
+      }
+
+      user.password = await bcrypt.hash(req.body.newPassword, 8)
+      user.save()
+      res.status(201).send(user)
+    } catch (error) {
+        res.status(400).send(error)
+    }
+
+})
+
+
 /**
  * The token must be in the header
  */
@@ -49,6 +78,8 @@ router.get('/users/me', auth, async(req, res) => {
     // View logged in user profile
     res.send(req.user)
 })
+
+
 
 
 
@@ -64,6 +95,63 @@ router.post('/users/me/logout', auth, async (req, res) => {
     } catch (error) {
         res.status(500).send(error)
     }
+})
+
+
+/**
+ * update the email field
+ * The payload should be:
+ * {
+ *   "email": "bla@email.com"
+ * }
+ */
+router.put('/users/me/email', auth, async (req, res) => {
+  try {
+    let user = req.user
+    user.email = req.body.email
+    await user.save()
+    res.status(201).send(user)
+  } catch (error) {
+    res.status(400).send(error)
+  }
+})
+
+
+/**
+ * update the description field
+ * The payload should be:
+ * {
+ *   "description": "hello..."
+ * }
+ */
+router.put('/users/me/description', auth, async (req, res) => {
+  try {
+    let user = req.user
+    user.description = req.body.description
+    await user.save()
+    res.status(201).send(user)
+  } catch (error) {
+    res.status(400).send(error)
+  }
+})
+
+
+/**
+ * update the profile picture field
+ * The payload should be:
+ * {
+ *   "picture": "hello..."
+ * }
+ */
+router.put('/users/me/picture', auth, async (req, res) => {
+  try {
+    let user = req.user
+    user.picture = req.body.picture
+    await user.save()
+    res.status(201).send(user)
+  } catch (error) {
+    res.status(400).send(error)
+  }
 })
 
 
