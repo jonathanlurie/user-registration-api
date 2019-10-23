@@ -45,28 +45,32 @@ router.post('/users/login', async(req, res) => {
 })
 
 
+
+/**
+ * Update the password. Payload must be of form:
+ *
+ * {
+ *   "currentPassword": "tHeCuRrEnToNe",
+ *   "newPassword": "tHeNeWoNe"
+ * }
+ */
 router.put('/users/me/password', auth, async(req, res) => {
 
-  console.log(await bcrypt.hash(req.body.newPassword, 8))
+  try {
+    let user = req.user
+    const isPasswordMatch = await bcrypt.compare(req.body.currentPassword, user.password)
 
-    try {
-      let user = req.user
-      console.log('plain', req.body.currentPassword)
-      console.log('hash', user.password)
-      const isPasswordMatch = await bcrypt.compare(req.body.currentPassword, user.password)
-
-      console.log('isPasswordMatch', isPasswordMatch)
-
-      if (!isPasswordMatch) {
-          throw new Error({error: 'The current password is invalid'})
-      }
-
-      user.password = await bcrypt.hash(req.body.newPassword, 8)
-      user.save()
-      res.status(201).send(user)
-    } catch (error) {
-        res.status(400).send(error)
+    if (!isPasswordMatch) {
+      throw new Error('The current password is invalid')
     }
+
+    user.password = req.body.newPassword
+    await user.save()
+    res.status(201).send(user)
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({error: error.toString()})
+  }
 
 })
 
