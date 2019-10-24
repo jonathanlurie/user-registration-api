@@ -31,7 +31,17 @@ const userSchema = mongoose.Schema({
     },
     link: {
         type: String,
-        required: false
+        required: false,
+        validate: value => {
+          let isValid = validator.isURL(link,  {
+            require_protocol: true,
+            require_valid_protocol: true
+          })
+
+          if(!isUrl){
+            throw new Error(`URL is invalid`)
+          }
+        }
     },
     picture: {
         type: String,
@@ -54,6 +64,7 @@ userSchema.pre('save', async function (next) {
     next()
 })
 
+
 userSchema.methods.generateAuthToken = async function() {
     // Generate an auth token for the user
     const user = this
@@ -61,6 +72,15 @@ userSchema.methods.generateAuthToken = async function() {
     user.tokens = user.tokens.concat({token})
     await user.save()
     return token
+}
+
+
+userSchema.methods.updateField = async function(key, value) {
+
+
+    const user = this
+    user[key] = value
+    await user.save()
 }
 
 
